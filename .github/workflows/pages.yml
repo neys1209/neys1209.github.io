@@ -2,7 +2,7 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [master]
+    branches: [master, main]
   workflow_dispatch:
 
 permissions:
@@ -18,19 +18,26 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - uses: ruby/setup-ruby@v1
+      - name: Setup Pages
+        id: pages
+        uses: actions/configure-pages@v5
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
         with:
           ruby-version: "3.3"
           bundler-cache: true
 
       - name: Build site
-        run: JEKYLL_ENV=production bundle exec jekyll build -d ./_site
+        run: JEKYLL_ENV=production bundle exec jekyll build --baseurl "${{ steps.pages.outputs.base_path }}" -d ./_site
         env:
           JEKYLL_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - uses: actions/upload-pages-artifact@v3
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
 
   deploy:
     environment:
