@@ -1,0 +1,577 @@
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="4.4.1">Jekyll</generator><link href="http://localhost:4000/moonwalk/feed.xml" rel="self" type="application/atom+xml" /><link href="http://localhost:4000/moonwalk/" rel="alternate" type="text/html" /><updated>2026-10-20T22:19:28+09:00</updated><id>http://localhost:4000/moonwalk/feed.xml</id><title type="html">Moonwalk</title><subtitle>Moonwalk is a fast and elegant Jekyll theme with a clean dark mode. It comes with horizontal list (for navbar and footer), card list (for portfolio), and a generic vertical list. It is very easy to modify in case you want to build over it - please see _layouts/home.html to do that.
+</subtitle><author><name>Abhinav Saxena</name></author><entry><title type="html">Making your Jekyll site agent-friendly</title><link href="http://localhost:4000/moonwalk/agent-friendly-jekyll" rel="alternate" type="text/html" title="Making your Jekyll site agent-friendly" /><published>2026-05-06T04:00:00+09:00</published><updated>2026-05-06T04:00:00+09:00</updated><id>http://localhost:4000/moonwalk/agent-friendly-jekyll</id><content type="html" xml:base="http://localhost:4000/moonwalk/agent-friendly-jekyll"><![CDATA[<p>A growing share of your readers are not human. ChatGPT, Claude, Perplexity, agent frameworks, and the indexing crawlers behind them all want to read your site. They are also pretty bad at it. They burn tokens parsing HTML, stripping nav chrome, decoding theme toggles, and hunting for the actual prose.</p>
+
+<p>Moonwalk now ships with two tiny Jekyll plugins that fix this. Browsers still see your site exactly as before. Agents get clean Markdown.</p>
+
+<h2 id="what-ships">What ships</h2>
+
+<h3 id="jekyll-markdown-output">jekyll-markdown-output</h3>
+
+<p>For every post rendered at /foo, this plugin emits a sibling at /foo.md containing:</p>
+
+<ul>
+  <li>a small YAML frontmatter block (title, date, url, summary, tags, category, author)</li>
+  <li>the post’s source Markdown with Liquid rendered</li>
+</ul>
+
+<p>No layouts, no nav, no theme toggle scripts. Just the content.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>_site/
+  foo.html              &lt;- as before
+  foo.md                &lt;- new: clean Markdown
+</code></pre></div></div>
+
+<p>An agent that lands on /foo can fetch /foo.md and skip HTML parsing entirely. It is the same pattern Anthropic, Stripe, and a growing set of agent-friendly sites use.</p>
+
+<h3 id="jekyll-llms-output">jekyll-llms-output</h3>
+
+<p>This one generates two files at the root of your site:</p>
+
+<ul>
+  <li><strong>/llms.txt</strong> - a curated index of your most important pages, following the <a href="https://llmstxt.org">llmstxt.org</a> spec. Think of it as a sitemap for LLMs.</li>
+  <li><strong>/llms-full.txt</strong> - the full content of all configured collections, concatenated. One fetch and an agent has your entire blog.</li>
+</ul>
+
+<p>If you drop a YAML data file at _data/llms.yml with a title, description, and sections, the plugin uses your hand-curated structure. Otherwise it auto-generates from your posts.</p>
+
+<h2 id="why-two-plugins-instead-of-one">Why two plugins instead of one</h2>
+
+<p>They solve different problems and compose well.</p>
+
+<p>The llms.txt file is a single discovery file. An agent that has never seen your site can fetch it and learn what is here. But it is one file, and it does not scale to deep linking. If a user shares a specific post URL with an agent, the agent still needs to fetch that page.</p>
+
+<p>That is where Markdown siblings come in. Any post URL has a Markdown twin one extension away. Agents do not need to consult the index first.</p>
+
+<p>Ship both. They are complementary.</p>
+
+<h2 id="how-to-enable-them">How to enable them</h2>
+
+<p>Both ship as Moonwalk runtime dependencies. If you are on Moonwalk 0.2.0 or later, you only need to add them to your config:</p>
+
+<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="na">plugins</span><span class="pi">:</span>
+  <span class="pi">-</span> <span class="s">jekyll-markdown-output</span>
+  <span class="pi">-</span> <span class="s">jekyll-llms-output</span>
+
+<span class="na">markdown_output</span><span class="pi">:</span>
+  <span class="na">collections</span><span class="pi">:</span> <span class="pi">[</span><span class="nv">posts</span><span class="pi">]</span>
+
+<span class="na">llms_output</span><span class="pi">:</span>
+  <span class="na">index</span><span class="pi">:</span>
+    <span class="na">collections</span><span class="pi">:</span> <span class="pi">[</span><span class="nv">posts</span><span class="pi">]</span>
+  <span class="na">full</span><span class="pi">:</span>
+    <span class="na">collections</span><span class="pi">:</span> <span class="pi">[</span><span class="nv">posts</span><span class="pi">]</span>
+    <span class="na">respect_markdown_output</span><span class="pi">:</span> <span class="kc">true</span>
+</code></pre></div></div>
+
+<p>Build the site. You should see something like:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>MarkdownOutput: wrote 9 markdown file(s)
+LlmsOutput: wrote /llms.txt
+LlmsOutput: wrote /llms-full.txt
+</code></pre></div></div>
+
+<p>That’s it.</p>
+
+<h2 id="customizing-what-shows-up">Customizing what shows up</h2>
+
+<h3 id="skip-a-single-post">Skip a single post</h3>
+
+<p>Add <code class="language-plaintext highlighter-rouge">markdown_output: false</code> to a post’s frontmatter and no Markdown twin is emitted for it. Useful for drafts you want indexed by Google but not picked up by agents.</p>
+
+<h3 id="curate-llmstxt">Curate llms.txt</h3>
+
+<p>The auto-generated index is fine. A curated one is much better. Drop this in <code class="language-plaintext highlighter-rouge">_data/llms.yml</code>:</p>
+
+<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="na">title</span><span class="pi">:</span> <span class="s">Your Site</span>
+<span class="na">description</span><span class="pi">:</span> <span class="pi">&gt;</span>
+  <span class="s">One paragraph about who you are and what readers</span>
+  <span class="s">(human or otherwise) will find here.</span>
+
+<span class="na">sections</span><span class="pi">:</span>
+  <span class="pi">-</span> <span class="na">heading</span><span class="pi">:</span> <span class="s">Featured Writing</span>
+    <span class="na">links</span><span class="pi">:</span>
+      <span class="pi">-</span> <span class="na">title</span><span class="pi">:</span> <span class="s">My best post</span>
+        <span class="na">url</span><span class="pi">:</span> <span class="s">https://example.com/best-post</span>
+        <span class="na">description</span><span class="pi">:</span> <span class="s">One line on what it covers</span>
+
+  <span class="pi">-</span> <span class="na">heading</span><span class="pi">:</span> <span class="s">About</span>
+    <span class="na">links</span><span class="pi">:</span>
+      <span class="pi">-</span> <span class="na">title</span><span class="pi">:</span> <span class="s">About me</span>
+        <span class="na">url</span><span class="pi">:</span> <span class="s">https://example.com/about</span>
+        <span class="na">description</span><span class="pi">:</span> <span class="s">Background and contact</span>
+</code></pre></div></div>
+
+<p>The plugin uses this verbatim. You decide what an agent encounters first.</p>
+
+<h3 id="respect-markdown-twins-in-the-bulk-file">Respect Markdown twins in the bulk file</h3>
+
+<p>The default config sets <code class="language-plaintext highlighter-rouge">respect_markdown_output: true</code>. This tells the llms-full plugin to skip any post that has opted out via the markdown frontmatter flag. Without it, opted-out posts would still leak into the bulk file.</p>
+
+<h2 id="what-about-github-pages">What about GitHub Pages</h2>
+
+<p>GitHub Pages restricts plugins to a <a href="https://pages.github.com/versions/">whitelist</a>, and these two are not on it. Your options:</p>
+
+<ol>
+  <li>Build the site yourself in CI - Actions, Netlify, Cloudflare Pages, Vercel - and deploy the built site to GH Pages.</li>
+  <li>Skip the plugins and serve HTML only.</li>
+</ol>
+
+<p>Cloudflare Pages, Netlify, and Vercel run them without restriction. If you are on GH Pages and want this to work, the cleanest path is a small GitHub Actions workflow that builds and deploys.</p>
+
+<h2 id="should-you-bother">Should you bother</h2>
+
+<p>If your site is mostly for humans and you do not care whether an LLM cites it well, no. Move on.</p>
+
+<p>If you write things you want agents to find, recommend, and quote accurately, this is a roughly five-minute change with a non-trivial payoff. Agents are reading your site whether you help them or not. The question is whether they read source Markdown or a wrestled-down approximation of your HTML.</p>
+
+<p>Both plugins are open source and small enough to read in one sitting:</p>
+
+<ul>
+  <li><a href="https://github.com/abhinavs/jekyll-markdown-output">github.com/abhinavs/jekyll-markdown-output</a></li>
+  <li><a href="https://github.com/abhinavs/jekyll-llms-output">github.com/abhinavs/jekyll-llms-output</a></li>
+</ul>
+
+<p>They were the smallest change I could think of that meaningfully improves how the agentic web reads my own writing. Now they are part of Moonwalk too.</p>]]></content><author><name>Abhinav Saxena</name></author><category term="Jekyll" /><category term="AI" /><category term="Plugins" /><summary type="html"><![CDATA[A growing share of your readers are not human. ChatGPT, Claude, Perplexity, agent frameworks, and the indexing crawlers behind them all want to read your site. They are also pretty bad at it. They burn tokens parsing HTML, stripping nav chrome, decoding theme toggles, and hunting for the actual prose.]]></summary></entry><entry><title type="html">Postgres is enough for background jobs</title><link href="http://localhost:4000/moonwalk/postgres-is-enough-for-background-jobs" rel="alternate" type="text/html" title="Postgres is enough for background jobs" /><published>2026-05-03T12:30:00+09:00</published><updated>2026-05-03T12:30:00+09:00</updated><id>http://localhost:4000/moonwalk/postgres-is-enough-for-background-jobs</id><content type="html" xml:base="http://localhost:4000/moonwalk/postgres-is-enough-for-background-jobs"><![CDATA[<p>The reflex when a Python app needs background jobs is to reach for Celery, which means reaching for Redis, which means reaching for a third moving part: another service to run, monitor, back up, and reason about when something goes wrong.</p>
+
+<p>For a lot of apps, that third moving part buys you nothing you could not get from the database you already have.</p>
+
+<p>This is the argument behind Soniq. Background jobs in Python, persisted in Postgres, no broker, no separate result backend. The tagline says it plainly: <em>“Powered by the Postgres you already have. Nothing else to maintain.”</em></p>
+
+<h2 id="the-bug-redis-cannot-prevent">The bug Redis cannot prevent</h2>
+
+<p>Here is the scenario that taught me to stop using a separate broker for small and mid-sized apps.</p>
+
+<p>You have an endpoint that creates a User row and enqueues a “send welcome email” job. The order matters. If the job fires before the row commits, the worker reads the database and finds nothing. If the row commits but the enqueue fails, the user exists but never gets a welcome.</p>
+
+<p>With Redis-backed queues, these are two different systems with two different transactions. You write code to make them consistent. You sometimes fail.</p>
+
+<p>With Postgres-backed jobs, the job is a row in the same database as your User row. Both commit in the same transaction or neither does. The “row exists but the job never fired” bug stops being possible.</p>
+
+<p>That alone is worth the switch for a class of apps. The fact that you also remove a service from the architecture is bonus.</p>
+
+<h2 id="how-it-actually-works">How it actually works</h2>
+
+<p>Two Postgres features carry most of the weight.</p>
+
+<h3 id="select--for-update-skip-locked">SELECT … FOR UPDATE SKIP LOCKED</h3>
+
+<p>The classic worry with database-backed queues is the thundering herd. A hundred workers all run SELECT * FROM jobs LIMIT 1 at the same time. They all get the same row. They fight.</p>
+
+<p>SKIP LOCKED solves this in one keyword.</p>
+
+<div class="language-sql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">SELECT</span> <span class="n">id</span><span class="p">,</span> <span class="n">payload</span> <span class="k">FROM</span> <span class="n">jobs</span>
+<span class="k">WHERE</span> <span class="k">state</span> <span class="o">=</span> <span class="s1">'queued'</span> <span class="k">AND</span> <span class="n">run_at</span> <span class="o">&lt;=</span> <span class="n">now</span><span class="p">()</span>
+<span class="k">ORDER</span> <span class="k">BY</span> <span class="n">run_at</span>
+<span class="k">LIMIT</span> <span class="mi">1</span>
+<span class="k">FOR</span> <span class="k">UPDATE</span> <span class="n">SKIP</span> <span class="n">LOCKED</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>Each worker locks one row. Other workers see the locked row, skip it, and pick the next one. No coordination. No fighting. Postgres handles the concurrency.</p>
+
+<p>This is not a clever workaround. It is a feature designed for queue-like workloads, and it has been stable since Postgres 9.5 (2016).</p>
+
+<h3 id="listen--notify">LISTEN / NOTIFY</h3>
+
+<p>The second worry is latency. Polling the jobs table every second works but feels wasteful. Five seconds of latency on a “send welcome email” job is fine. Five seconds on a “process payment” callback is not.</p>
+
+<p>Postgres has a built-in pub/sub channel. The producer NOTIFYs when it inserts a job. Workers LISTEN on the channel and wake up immediately. Latency drops from polling-interval to single-digit milliseconds.</p>
+
+<p>Combined, these two features give you the same operational shape as a Redis queue: instant pickup, safe concurrent workers, persistence, retries. Without the second service.</p>
+
+<h2 id="what-you-get-out-of-the-box">What you get out of the box</h2>
+
+<p>Soniq packages this with the obvious surrounding pieces:</p>
+
+<ul>
+  <li>Retries with exponential backoff</li>
+  <li>Cron-style and one-off scheduled jobs</li>
+  <li>Deduplication by job key</li>
+  <li>Dead-letter queue for jobs that exhaust retries</li>
+  <li>A web dashboard for inspection</li>
+  <li>Prometheus metrics for the bits you would otherwise build yourself</li>
+</ul>
+
+<p>The smallest useful program:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">soniq</span> <span class="kn">import</span> <span class="n">Soniq</span>
+
+<span class="n">app</span> <span class="o">=</span> <span class="nc">Soniq</span><span class="p">(</span><span class="n">database_url</span><span class="o">=</span><span class="sh">"</span><span class="s">postgresql://localhost/myapp</span><span class="sh">"</span><span class="p">)</span>
+
+<span class="nd">@app.job</span><span class="p">()</span>
+<span class="k">async</span> <span class="k">def</span> <span class="nf">send_welcome</span><span class="p">(</span><span class="n">to</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+    <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Sending welcome email to </span><span class="si">{</span><span class="n">to</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
+
+<span class="k">await</span> <span class="n">app</span><span class="p">.</span><span class="nf">enqueue</span><span class="p">(</span><span class="n">send_welcome</span><span class="p">,</span> <span class="n">to</span><span class="o">=</span><span class="sh">"</span><span class="s">dev@example.com</span><span class="sh">"</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>Then run soniq setup once to create the tables, soniq worker to process jobs, and you are done. No broker config. No result backend.</p>
+
+<h2 id="where-this-falls-down">Where this falls down</h2>
+
+<p>I want to be honest about the limits, because every “you don’t need X” post on the internet eventually runs into someone who does need X.</p>
+
+<p><strong>Throughput.</strong> Soniq comfortably handles up to about 10k jobs per second. Redis-backed queues can do an order of magnitude more. If you are sending 50k notifications a second through a single queue, you have outgrown this approach. You also probably know it.</p>
+
+<p><strong>Cross-language workers.</strong> Soniq is Python on both ends. Celery has a story for Ruby, Node, Go workers reading off the same queue. If your architecture genuinely needs that, this is not the tool.</p>
+
+<p><strong>DAG orchestration.</strong> Airflow and Prefect run pipelines of dependent jobs with retry semantics across the whole graph. Soniq runs individual jobs. They are different problems with different tools.</p>
+
+<p>For everything else (the long tail of apps that need reliable async work, scheduled jobs, retries, and a place to look when something goes wrong) Postgres is enough.</p>
+
+<h2 id="the-broader-pattern">The broader pattern</h2>
+
+<p>This post is really about a smaller idea: prefer the boring database you already have over a new service, until the database stops being enough.</p>
+
+<p>Most apps never reach the point where it stops being enough. They just reach the point where someone reaches for the new service out of habit, and adds a year of operational tax for no real benefit.</p>
+
+<p>Soniq is one specific bet on that pattern. The site has the pitch in more detail and the docs are short: <a href="https://soniq.abhinav.co">soniq.abhinav.co</a>.</p>]]></content><author><name>Abhinav Saxena</name></author><category term="Python" /><category term="Postgres" /><category term="Background Jobs" /><summary type="html"><![CDATA[The reflex when a Python app needs background jobs is to reach for Celery, which means reaching for Redis, which means reaching for a third moving part: another service to run, monitor, back up, and reason about when something goes wrong.]]></summary></entry><entry><title type="html">Your landing page and your app should not be the same site</title><link href="http://localhost:4000/moonwalk/landing-page-and-app-should-be-separate" rel="alternate" type="text/html" title="Your landing page and your app should not be the same site" /><published>2026-04-28T12:30:00+09:00</published><updated>2026-04-28T12:30:00+09:00</updated><id>http://localhost:4000/moonwalk/landing-page-and-app-should-be-separate</id><content type="html" xml:base="http://localhost:4000/moonwalk/landing-page-and-app-should-be-separate"><![CDATA[<p>There is a tempting move when you start a new product. The app is in Rails or Next or whatever you reach for. The marketing page is one route. About, pricing, terms, privacy, blog, all served by the same process. One repo, one deploy, one mental model.</p>
+
+<p>I have done this on enough projects to think it is a mistake.</p>
+
+<h2 id="the-problems-are-quiet">The problems are quiet</h2>
+
+<p>They do not show up in week one. They show up later, all at the same time.</p>
+
+<p><strong>Your homepage is as slow as your slowest endpoint.</strong> When the database is under load or a worker is leaking memory, your marketing page slows down too. The first impression a visitor gets is your worst-day performance. Static HTML on a CDN cannot have a bad day in the same way.</p>
+
+<p><strong>Marketing edits ship behind code review.</strong> Marketing wants to change the headline. Now it is a PR, a test run, a deploy, a cache bust. On a static site it is one commit and 40 seconds. The friction is not just annoying, it changes what gets shipped. Things that should be experiments become scheduled work.</p>
+
+<p><strong>SEO and app routing fight each other.</strong> Your blog wants /blog/some-post. Your app might want /blog as a feature. Pricing wants /pricing as a stable URL forever. App routing wants the freedom to refactor. They are different concerns and they should be different services.</p>
+
+<p><strong>The marketing site never needs the application’s runtime.</strong> It does not need a database. It does not need a job queue. It does not need authentication. Why is it shipping with all of them?</p>
+
+<h2 id="what-a-separate-landing-site-looks-like">What a separate landing site looks like</h2>
+
+<p>A static site generator, a CSS framework, a host that serves files from a CDN. That is it. No build pipeline beyond markdown and templates. No runtime to monitor. Deploy on every push to main, ship to a CDN, done.</p>
+
+<p>This is what Cookie is. Jekyll for the generator, Tailwind for the CSS, a structure that gets you from fork to deployed in an afternoon.</p>
+
+<p>What ships with it:</p>
+
+<ul>
+  <li>A landing page that does not look like a Bootstrap demo from 2014</li>
+  <li>About, terms of service, privacy policy as starter pages</li>
+  <li>An integrated blog with proper Markdown handling</li>
+  <li>SEO tags, RSS feed, sitemap out of the box</li>
+  <li>Mobile responsive without you thinking about it</li>
+  <li>One-click deploy to Netlify, easy to point at Vercel or Cloudflare Pages</li>
+</ul>
+
+<p>It is not a CMS. There is no admin panel. You edit Markdown files, you commit, the site rebuilds. That is the entire model.</p>
+
+<h2 id="who-this-is-for">Who this is for</h2>
+
+<p>If you are an indie founder or small team about to ship a new product, separate the marketing site on day one. The cost is fifteen minutes of repo setup. The savings show up over the next two years.</p>
+
+<p>If you have an existing app with marketing bundled in, the migration is usually a few days. Move /pricing, /about, /, /blog out to a static site behind the same domain. Point the app at /app or a subdomain. The hardest part is usually the blog redirects.</p>
+
+<h2 id="used-by-my-own-products">Used by my own products</h2>
+
+<p>The receipts: Cookie powers the marketing sites for <a href="https://www.apicblocks.com">APIC Blocks</a>, <a href="https://www.apicagent.com">APIC Agent</a>, <a href="https://www.annexr.com">Annexr</a>, <a href="https://www.soopr.co">Soopr</a>, and <a href="https://www.chhotisikahani.com">Chhoti Si Kahani</a>. I started one of those in 2021 and never had a reason to switch off.</p>
+
+<p>When the same template survives five products and four years without rewriting, that is usually the signal that the underlying decision was right, even if the template itself keeps getting refreshed.</p>
+
+<p>Fork it, deploy it, write your headline: <a href="https://github.com/abhinavs/cookie">github.com/abhinavs/cookie</a>.</p>]]></content><author><name>Abhinav Saxena</name></author><category term="Jekyll" /><category term="Tailwind" /><category term="Indie" /><summary type="html"><![CDATA[There is a tempting move when you start a new product. The app is in Rails or Next or whatever you reach for. The marketing page is one route. About, pricing, terms, privacy, blog, all served by the same process. One repo, one deploy, one mental model.]]></summary></entry><entry><title type="html">I run my own httpbin</title><link href="http://localhost:4000/moonwalk/i-run-my-own-httpbin" rel="alternate" type="text/html" title="I run my own httpbin" /><published>2026-04-22T12:30:00+09:00</published><updated>2026-04-22T12:30:00+09:00</updated><id>http://localhost:4000/moonwalk/i-run-my-own-httpbin</id><content type="html" xml:base="http://localhost:4000/moonwalk/i-run-my-own-httpbin"><![CDATA[<p>httpbin.org is one of those quiet pieces of internet plumbing that everyone leans on. CI tests, client library examples, half the curl tutorials on Stack Overflow. It is also a single hostname run as a side project, and when it has a bad day, my tests have a bad day.</p>
+
+<p>That bothered me enough to rebuild it. <a href="https://httplex.com">HTTPlex</a> is a small Elixir/Phoenix service that does the same thing httpbin does, runs on a box I control, and never makes my CI flaky because someone else’s deploy went sideways. There is also a hosted version at <a href="https://httplex.com">httplex.com</a> you can point at if you do not want to self-host.</p>
+
+<h2 id="what-it-does">What it does</h2>
+
+<p>The same things httpbin does, mostly.</p>
+
+<ul>
+  <li>Echo what you sent: GET /get, POST /post, /headers, /ip, /user-agent</li>
+  <li>Return any status code: /status/418</li>
+  <li>Test redirects, both absolute and relative, single hop or chained</li>
+  <li>Test all the auth flavors: basic, bearer, digest, hidden basic</li>
+  <li>Return a response in any format: JSON, XML, HTML, an actual image</li>
+  <li>Stream bytes, drip data over time, delay a response by N seconds</li>
+  <li>Set and read cookies</li>
+  <li>Return data in any encoding: gzip, brotli, deflate</li>
+  <li>Test caching: ETag, Cache-Control, max-age</li>
+</ul>
+
+<p>If you have used httpbin, you already know the API. That is the point. There is no learning curve, just a different hostname.</p>
+
+<h2 id="why-elixir">Why Elixir</h2>
+
+<p>Two reasons.</p>
+
+<p>The first is honest: I wanted to write more Elixir, and a service like this is small enough to finish in a weekend and rich enough to touch most of Phoenix. Pattern matching on request methods, returning streams from a controller, OTP supervision under load. It is a good project to learn on.</p>
+
+<p>The second is practical: BEAM handles slow clients and long-lived connections better than almost anything else. /drip and /stream-bytes are useful precisely because they keep a connection open. On a runtime where every connection is a process, that is just normal.</p>
+
+<h2 id="why-bother-running-it-yourself">Why bother running it yourself</h2>
+
+<p>Three reasons that mostly collapse into one.</p>
+
+<p><strong>Your CI shouldn’t depend on a third-party hostname.</strong> Every shared service has bad days. Yours should not be coupled to theirs.</p>
+
+<p><strong>Self-hosted means you can extend it.</strong> Need to test how your client handles a server that returns 200 OK with a Content-Length lie? Add an endpoint. The whole controller is one file you can read in five minutes.</p>
+
+<p><strong>It is a free education.</strong> If you have never read a real Phoenix controller, this is a cheap way to. The whole repo is a tour of the framework’s idioms with no business logic in the way.</p>
+
+<h2 id="running-it">Running it</h2>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>git clone https://github.com/abhinavs/httplex
+cd httplex
+mix setup
+mix phx.server
+</code></pre></div></div>
+
+<p>Now hit localhost:4000. Or deploy it. Phoenix releases are one command and the artifact is a self-contained tarball. Fly.io and Render both have one-click templates.</p>
+
+<p>Or just hit <a href="https://httplex.com">httplex.com</a> and start poking endpoints. Source: <a href="https://github.com/abhinavs/httplex">github.com/abhinavs/httplex</a>.</p>
+
+<p>A small tool, a fun rewrite, and a quiet reduction in CI flakiness. Worth a weekend.</p>]]></content><author><name>Abhinav Saxena</name></author><category term="HTTP" /><category term="Elixir" /><category term="Tools" /><summary type="html"><![CDATA[httpbin.org is one of those quiet pieces of internet plumbing that everyone leans on. CI tests, client library examples, half the curl tutorials on Stack Overflow. It is also a single hostname run as a side project, and when it has a bad day, my tests have a bad day.]]></summary></entry><entry><title type="html">Unix wasn’t built for agents</title><link href="http://localhost:4000/moonwalk/vrk-unix-tools-for-agents" rel="alternate" type="text/html" title="Unix wasn’t built for agents" /><published>2026-04-15T12:30:00+09:00</published><updated>2026-04-15T12:30:00+09:00</updated><id>http://localhost:4000/moonwalk/vrk-unix-tools-for-agents</id><content type="html" xml:base="http://localhost:4000/moonwalk/vrk-unix-tools-for-agents"><![CDATA[<p>A few weeks ago I caught a pipeline that was about to send a 200KB document to an LLM, fail the input limit, retry three times, and bill me for the privilege. The shell didn’t blink. cat printed bytes, jq parsed them, curl uploaded them. Each tool did its job. None of them knew the agent at the end of the pipe was going to blow a token budget.</p>
+
+<p>That bug taught me something obvious in retrospect. Unix tools were built for humans who read the output of one stage before piping to the next. We grep, eyeball the result, then pipe to awk. Agents skip the eyeballing. They wire the whole pipeline up at once and hope.</p>
+
+<p>vrk is the toolkit I started building for that gap. 26 small commands, one static binary, zero dependencies. It is not a replacement for cat or jq. It is the layer that should sit next to them when the consumer at the other end of the pipe is an LLM.</p>
+
+<h2 id="what-changes-when-an-agent-is-reading-the-pipe">What changes when an agent is reading the pipe</h2>
+
+<p>Three things, mostly.</p>
+
+<p><strong>Silent failures stop being acceptable.</strong> classic Unix conflates “no output” with “everything is fine.” awk on a missing field returns empty. jq on a wrong path returns null. A human notices. An agent passes the empty string through and the next stage hallucinates.</p>
+
+<p>vrk tools use explicit exit codes. 0 for success, 1 for an error you should stop on, 2 for a soft signal the next tool can react to. A tok check against a budget exits 2 when the input is too large, so the next stage in the pipe can branch instead of crashing.</p>
+
+<p><strong>Token counts are first-class.</strong> None of the standard tools care how many tokens a string is. wc -w is approximate at best, lying at worst. If the next stage costs money per token, you want the count up front and you want to gate on it.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>cat article.md | vrk tok --check 8000 | vrk prompt --system 'Summarize'
+</code></pre></div></div>
+
+<p>The check fails loudly if the input would blow the budget. The prompt never runs. No retries, no surprise bill.</p>
+
+<p><strong>Secrets need to leak less.</strong> Pipelines copy data through a lot of stages. Anything you log, cache, or upload to a third-party model is a potential leak. vrk mask runs entropy and pattern checks on stdin and redacts before the data ever reaches a remote API.</p>
+
+<h2 id="the-shape-of-the-toolkit">The shape of the toolkit</h2>
+
+<p>A few I reach for daily:</p>
+
+<ul>
+  <li><strong>vrk grab</strong> - fetch a URL and return clean Markdown. Stripping nav and chrome before the LLM sees it cuts token cost by 40 to 60 percent on most articles.</li>
+  <li><strong>vrk chunk</strong> - split a long document into token-bounded pieces with sentence-aware boundaries. The naive “split every N characters” approach truncates mid-word and the model notices.</li>
+  <li><strong>vrk validate</strong> - validate JSON output against a schema. LLMs return JSON-shaped strings, not always valid JSON. Catch it at the seam, not three stages later.</li>
+  <li><strong>vrk coax</strong> - retry with backoff. Built into the tool because every agent pipeline needs it and shell loops with sleep are how you end up rate-limited at 3 AM.</li>
+  <li><strong>vrk kv</strong> - SQLite-backed key-value store for caching. Same reason: every pipeline needs one, and standing up Redis to memoize a function call is absurd.</li>
+</ul>
+
+<p>The rest cover the boring bits: jwt, uuid, epoch, sse parsing, schema diffing. They exist because at some point I wrote them inline in a bash script and decided that was the third time too many.</p>
+
+<h2 id="composability-is-the-whole-point">Composability is the whole point</h2>
+
+<p>Each tool reads stdin and writes stdout. None of them have hidden state. They chain.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>cat data.json \
+  | vrk validate --schema input.schema.json \
+  | vrk mask \
+  | vrk prompt --model claude-opus-4-7 --system 'Extract entities' \
+  | vrk validate --schema output.schema.json
+</code></pre></div></div>
+
+<p>That is a complete agent pipeline. Validate the input, redact secrets, run the prompt, validate the output. Every stage fails loud. No surprise costs, no leaked tokens, no malformed JSON downstream.</p>
+
+<h2 id="where-to-get-it">Where to get it</h2>
+
+<p>vrk is open source and the binary is one curl away. Source and install instructions: <a href="https://vrk.sh">vrk.sh</a>.</p>
+
+<p>The pitch in one sentence: classic Unix tools are excellent for humans and dangerous for agents. vrk fills the small set of gaps that show up the moment an LLM is the consumer at the end of the pipe. Use it next to your existing toolkit, not instead of it.</p>]]></content><author><name>Abhinav Saxena</name></author><category term="AI" /><category term="CLI" /><category term="Unix" /><summary type="html"><![CDATA[A few weeks ago I caught a pipeline that was about to send a 200KB document to an LLM, fail the input limit, retry three times, and bill me for the privilege. The shell didn’t blink. cat printed bytes, jq parsed them, curl uploaded them. Each tool did its job. None of them knew the agent at the end of the pipe was going to blow a token budget.]]></summary></entry><entry><title type="html">Github Alerts</title><link href="http://localhost:4000/moonwalk/github-alerts" rel="alternate" type="text/html" title="Github Alerts" /><published>2021-04-01T00:00:00+09:00</published><updated>2021-04-01T00:00:00+09:00</updated><id>http://localhost:4000/moonwalk/github-alerts</id><content type="html" xml:base="http://localhost:4000/moonwalk/github-alerts"><![CDATA[<p>Moonwalk now supports GitHub Markdown Alerts. These are styled blockquotes that highlight important information.</p>
+
+<h2 id="alert-types">Alert types</h2>
+
+<blockquote>
+  <p>[!NOTE]
+Useful information that users should know, even when skimming content.</p>
+</blockquote>
+
+<blockquote>
+  <p>[!TIP]
+Helpful advice for doing things better or more easily.</p>
+</blockquote>
+
+<blockquote>
+  <p>[!IMPORTANT]
+Key information users need to know to achieve their goal.</p>
+</blockquote>
+
+<blockquote>
+  <p>[!WARNING]
+Urgent info that needs immediate user attention to avoid problems.</p>
+</blockquote>
+
+<blockquote>
+  <p>[!CAUTION]
+Advises about risks or negative outcomes of certain actions.</p>
+</blockquote>
+
+<h2 id="alerts-with-longer-content">Alerts with longer content</h2>
+
+<blockquote>
+  <p>[!NOTE]
+Alerts can contain <strong>bold text</strong>, <code class="language-plaintext highlighter-rouge">inline code</code>, <a href="https://example.com">links</a>, and other standard Markdown formatting.</p>
+
+  <p>They can also span multiple paragraphs.</p>
+</blockquote>
+
+<h2 id="regular-blockquotes-still-work">Regular blockquotes still work</h2>
+
+<blockquote>
+  <p>This is a normal blockquote. It keeps its original styling and is not affected by the alert processing.</p>
+</blockquote>]]></content><author><name>Abhinav Saxena</name></author><category term="feature" /><category term="alerts" /><summary type="html"><![CDATA[Moonwalk now supports GitHub Markdown Alerts. These are styled blockquotes that highlight important information.]]></summary></entry><entry><title type="html">Soopr</title><link href="http://localhost:4000/moonwalk/soopr" rel="alternate" type="text/html" title="Soopr" /><published>2021-03-04T00:00:00+09:00</published><updated>2021-03-04T00:00:00+09:00</updated><id>http://localhost:4000/moonwalk/soopr</id><content type="html" xml:base="http://localhost:4000/moonwalk/soopr"><![CDATA[<p><a href="https://www.soopr.co">Soopr</a> is the easiest way for you to add share &amp; reaction buttons to your blog and website, integrate an URL shortener and simple to understand analytics service. Soopr lets you manage all of these using a powerful dashboard.</p>
+
+<p>Moonwalk uses Soopr for share and like buttons and it is already integrated. By default, Moonwalk shows <code class="language-plaintext highlighter-rouge">circular</code> Twitter, Facebook and Copy buttons in <code class="language-plaintext highlighter-rouge">base</code> size. To add <code class="language-plaintext highlighter-rouge">like</code> button, please signup for free on <a href="https://www.soopr.co">Soopr</a></p>
+
+<p>Once you have signed up on Soopr, get a publish token for your website and edit <code class="language-plaintext highlighter-rouge">_config.yml</code> file and add it under <code class="language-plaintext highlighter-rouge">soopr</code> key and restart the server.</p>
+<div class="language-yml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="na">soopr</span><span class="pi">:</span>
+  <span class="na">publish-token</span><span class="pi">:</span> <span class="s2">"</span><span class="s">ADD_YOUR_PUBLISH_TOKEN_HERE"</span> 
+</code></pre></div></div>
+
+<p>Check out the <a href="https://www.soopr.co">Soopr Website</a> for more info on how to get the most out of Soopr.</p>]]></content><author><name>Abhinav Saxena</name></author><category term="soopr" /><category term="config" /><summary type="html"><![CDATA[Soopr is the easiest way for you to add share &amp; reaction buttons to your blog and website, integrate an URL shortener and simple to understand analytics service. Soopr lets you manage all of these using a powerful dashboard.]]></summary></entry><entry><title type="html">Code Blocks</title><link href="http://localhost:4000/moonwalk/code" rel="alternate" type="text/html" title="Code Blocks" /><published>2021-01-08T00:00:00+09:00</published><updated>2021-01-08T00:00:00+09:00</updated><id>http://localhost:4000/moonwalk/code</id><content type="html" xml:base="http://localhost:4000/moonwalk/code"><![CDATA[<p>A showcase of syntax highlighting across languages.</p>
+
+<h2 id="python">Python</h2>
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">import</span> <span class="n">json</span>
+
+<span class="k">def</span> <span class="nf">load_config</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+    <span class="sh">"""</span><span class="s">Read a JSON config file and return its contents.</span><span class="sh">"""</span>
+    <span class="n">config_path</span> <span class="o">=</span> <span class="nc">Path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">config_path</span><span class="p">.</span><span class="nf">exists</span><span class="p">():</span>
+        <span class="k">raise</span> <span class="nc">FileNotFoundError</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Config not found: </span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">json</span><span class="p">.</span><span class="nf">loads</span><span class="p">(</span><span class="n">config_path</span><span class="p">.</span><span class="nf">read_text</span><span class="p">())</span>
+
+<span class="n">config</span> <span class="o">=</span> <span class="nf">load_config</span><span class="p">(</span><span class="sh">"</span><span class="s">settings.json</span><span class="sh">"</span><span class="p">)</span>
+<span class="nf">print</span><span class="p">(</span><span class="n">config</span><span class="p">.</span><span class="nf">get</span><span class="p">(</span><span class="sh">"</span><span class="s">name</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">world</span><span class="sh">"</span><span class="p">))</span>
+</code></pre></div></div>
+
+<h2 id="ruby">Ruby</h2>
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">require</span> <span class="s2">"net/http"</span>
+<span class="nb">require</span> <span class="s2">"json"</span>
+
+<span class="k">module</span> <span class="nn">Weather</span>
+  <span class="no">BASE_URL</span> <span class="o">=</span> <span class="s2">"https://api.weather.example.com"</span>
+
+  <span class="k">def</span> <span class="nc">self</span><span class="o">.</span><span class="nf">fetch</span><span class="p">(</span><span class="n">city</span><span class="p">)</span>
+    <span class="n">uri</span> <span class="o">=</span> <span class="no">URI</span><span class="p">(</span><span class="s2">"</span><span class="si">#{</span><span class="no">BASE_URL</span><span class="si">}</span><span class="s2">/current?city=</span><span class="si">#{</span><span class="n">city</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="n">response</span> <span class="o">=</span> <span class="no">Net</span><span class="o">::</span><span class="no">HTTP</span><span class="p">.</span><span class="nf">get_response</span><span class="p">(</span><span class="n">uri</span><span class="p">)</span>
+
+    <span class="k">unless</span> <span class="n">response</span><span class="p">.</span><span class="nf">is_a?</span><span class="p">(</span><span class="no">Net</span><span class="o">::</span><span class="no">HTTPSuccess</span><span class="p">)</span>
+      <span class="k">raise</span> <span class="s2">"Request failed: </span><span class="si">#{</span><span class="n">response</span><span class="p">.</span><span class="nf">code</span><span class="si">}</span><span class="s2">"</span>
+    <span class="k">end</span>
+
+    <span class="no">JSON</span><span class="p">.</span><span class="nf">parse</span><span class="p">(</span><span class="n">response</span><span class="p">.</span><span class="nf">body</span><span class="p">,</span> <span class="ss">symbolize_names: </span><span class="kp">true</span><span class="p">)</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="n">data</span> <span class="o">=</span> <span class="no">Weather</span><span class="p">.</span><span class="nf">fetch</span><span class="p">(</span><span class="s2">"Tokyo"</span><span class="p">)</span>
+<span class="nb">puts</span> <span class="s2">"</span><span class="si">#{</span><span class="n">data</span><span class="p">[</span><span class="ss">:city</span><span class="p">]</span><span class="si">}</span><span class="s2">: </span><span class="si">#{</span><span class="n">data</span><span class="p">[</span><span class="ss">:temp_c</span><span class="p">]</span><span class="si">}</span><span class="s2">C"</span>
+</code></pre></div></div>
+
+<h2 id="javascript">JavaScript</h2>
+<div class="language-javascript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">async</span> <span class="kd">function</span> <span class="nf">fetchPosts</span><span class="p">(</span><span class="nx">tag</span><span class="p">)</span> <span class="p">{</span>
+  <span class="kd">const</span> <span class="nx">url</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">URL</span><span class="p">(</span><span class="dl">"</span><span class="s2">https://api.example.com/posts</span><span class="dl">"</span><span class="p">);</span>
+  <span class="nx">url</span><span class="p">.</span><span class="nx">searchParams</span><span class="p">.</span><span class="nf">set</span><span class="p">(</span><span class="dl">"</span><span class="s2">tag</span><span class="dl">"</span><span class="p">,</span> <span class="nx">tag</span><span class="p">);</span>
+
+  <span class="kd">const</span> <span class="nx">response</span> <span class="o">=</span> <span class="k">await</span> <span class="nf">fetch</span><span class="p">(</span><span class="nx">url</span><span class="p">);</span>
+  <span class="k">if </span><span class="p">(</span><span class="o">!</span><span class="nx">response</span><span class="p">.</span><span class="nx">ok</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">throw</span> <span class="k">new</span> <span class="nc">Error</span><span class="p">(</span><span class="s2">`Failed to fetch posts: </span><span class="p">${</span><span class="nx">response</span><span class="p">.</span><span class="nx">status</span><span class="p">}</span><span class="s2">`</span><span class="p">);</span>
+  <span class="p">}</span>
+
+  <span class="kd">const</span> <span class="p">{</span> <span class="nx">posts</span> <span class="p">}</span> <span class="o">=</span> <span class="k">await</span> <span class="nx">response</span><span class="p">.</span><span class="nf">json</span><span class="p">();</span>
+  <span class="k">return</span> <span class="nx">posts</span><span class="p">.</span><span class="nf">map</span><span class="p">(({</span> <span class="nx">title</span><span class="p">,</span> <span class="nx">slug</span> <span class="p">})</span> <span class="o">=&gt;</span> <span class="p">({</span> <span class="nx">title</span><span class="p">,</span> <span class="nx">slug</span> <span class="p">}));</span>
+<span class="p">}</span>
+
+<span class="kd">const</span> <span class="nx">posts</span> <span class="o">=</span> <span class="k">await</span> <span class="nf">fetchPosts</span><span class="p">(</span><span class="dl">"</span><span class="s2">javascript</span><span class="dl">"</span><span class="p">);</span>
+<span class="nx">console</span><span class="p">.</span><span class="nf">log</span><span class="p">(</span><span class="s2">`Found </span><span class="p">${</span><span class="nx">posts</span><span class="p">.</span><span class="nx">length</span><span class="p">}</span><span class="s2"> posts`</span><span class="p">);</span>
+</code></pre></div></div>
+
+<h2 id="elixir">Elixir</h2>
+<div class="language-elixir highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">defmodule</span> <span class="no">TaskRunner</span> <span class="k">do</span>
+  <span class="nv">@moduledoc</span> <span class="s2">"Runs async tasks with a timeout."</span>
+
+  <span class="k">def</span> <span class="n">run</span><span class="p">(</span><span class="n">tasks</span><span class="p">,</span> <span class="n">timeout</span> <span class="p">\\</span> <span class="mi">5_000</span><span class="p">)</span> <span class="k">do</span>
+    <span class="n">tasks</span>
+    <span class="o">|&gt;</span> <span class="no">Enum</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="o">&amp;</span><span class="no">Task</span><span class="o">.</span><span class="n">async</span><span class="o">/</span><span class="mi">1</span><span class="p">)</span>
+    <span class="o">|&gt;</span> <span class="no">Enum</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="o">&amp;</span><span class="no">Task</span><span class="o">.</span><span class="n">await</span><span class="p">(</span><span class="nv">&amp;1</span><span class="p">,</span> <span class="n">timeout</span><span class="p">))</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="n">results</span> <span class="o">=</span>
+  <span class="no">TaskRunner</span><span class="o">.</span><span class="n">run</span><span class="p">([</span>
+    <span class="k">fn</span> <span class="o">-&gt;</span> <span class="no">HTTPClient</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"/users"</span><span class="p">)</span> <span class="k">end</span><span class="p">,</span>
+    <span class="k">fn</span> <span class="o">-&gt;</span> <span class="no">HTTPClient</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"/posts"</span><span class="p">)</span> <span class="k">end</span>
+  <span class="p">])</span>
+
+<span class="no">IO</span><span class="o">.</span><span class="n">inspect</span><span class="p">(</span><span class="n">results</span><span class="p">,</span> <span class="ss">label:</span> <span class="s2">"results"</span><span class="p">)</span>
+</code></pre></div></div>
+
+<h2 id="css">CSS</h2>
+<div class="language-css highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nc">.highlight</span><span class="o">,</span> <span class="nt">pre</span> <span class="nt">code</span><span class="o">,</span> <span class="nt">blockquote</span> <span class="p">{</span>
+  <span class="nl">border-radius</span><span class="p">:</span> <span class="m">0.5em</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="nt">blockquote</span> <span class="p">{</span>
+  <span class="nl">background-color</span><span class="p">:</span> <span class="nf">var</span><span class="p">(</span><span class="l">--bg-secondary</span><span class="p">);</span>
+  <span class="nl">border</span><span class="p">:</span> <span class="m">1px</span> <span class="nf">var</span><span class="p">(</span><span class="l">--border</span><span class="p">)</span> <span class="nb">solid</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>]]></content><author><name>Abhinav Saxena</name></author><summary type="html"><![CDATA[A showcase of syntax highlighting across languages.]]></summary></entry><entry><title type="html">Post Example With Headings And Toc</title><link href="http://localhost:4000/moonwalk/post-example-with-headings-and-toc" rel="alternate" type="text/html" title="Post Example With Headings And Toc" /><published>2020-07-09T00:00:00+09:00</published><updated>2020-07-09T00:00:00+09:00</updated><id>http://localhost:4000/moonwalk/post-example-with-headings-and-toc</id><content type="html" xml:base="http://localhost:4000/moonwalk/post-example-with-headings-and-toc"><![CDATA[<p>Mauris viverra dictum ultricies. Vestibulum quis ipsum euismod, facilisis metus sed, varius ipsum. Donec scelerisque lacus libero, eu dignissim sem venenatis at. Nunc a egestas tortor, sed feugiat leo. Vestibulum porta tincidunt tellus, vitae ornare tortor. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Sed nunc neque, tempor in iaculis non, faucibus et metus. Etiam id nisl ut lorem gravida euismod.</p>
+
+<h2 id="the-start">The start</h2>
+
+<p>Fusce non velit cursus ligula mattis convallis vel at metus. Sed pharetra tellus massa, non elementum eros vulputate non. Suspendisse potenti. Quisque arcu felis, laoreet vel accumsan sit amet, fermentum at nunc. Sed massa quam, auctor in eros quis, porttitor tincidunt orci. Nulla convallis id sapien ornare viverra. Cras nec est lacinia ligula porta tincidunt. Nam a est eget ligula pellentesque posuere. Maecenas quis enim ac risus accumsan scelerisque. Aliquam vitae libero sapien. Etiam convallis, metus nec suscipit condimentum, quam massa congue velit, sit amet sollicitudin nisi tortor a lectus. Cras a arcu enim. Suspendisse hendrerit euismod est ac gravida. Donec vitae elit tristique, suscipit eros at, aliquam augue. In ac faucibus dui. Sed tempor lacus tristique elit sagittis, vitae tempor massa convallis.</p>
+
+<h2 id="the-middle">The middle</h2>
+
+<p>Proin quis velit et eros auctor laoreet. Aenean eget nibh odio. Suspendisse mollis enim pretium, fermentum urna vitae, egestas purus. Donec convallis tincidunt purus, scelerisque fermentum eros sagittis vel. Aliquam ac aliquet risus, tempus iaculis est. Fusce molestie mauris non interdum hendrerit. Curabitur ullamcorper, eros vitae interdum volutpat, lacus magna lacinia turpis, at accumsan dui tortor vel lectus. Aenean risus massa, semper non lectus rutrum, facilisis imperdiet mi. Praesent sed quam quis purus auctor ornare et sed augue. Vestibulum non quam quis ligula luctus placerat sed sit amet erat. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia curae; Fusce auctor, sem eu volutpat dignissim, turpis nibh malesuada arcu, in consequat elit mauris quis sem. Nam tristique sit amet enim vel accumsan. Sed id nibh commodo, dictum sem id, semper quam.</p>
+
+<h2 id="the-end">The end</h2>
+
+<p>Donec ex lectus, tempus non lacinia quis, pretium non ipsum. Praesent est nunc, rutrum vel tellus eu, tristique laoreet purus. In rutrum orci sit amet ex ornare, sit amet finibus lacus laoreet. Etiam ac facilisis purus, eget porttitor odio. Suspendisse tempus dolor nec risus sodales posuere. Proin dui dui, mollis a consectetur molestie, lobortis vitae tellus. Vivamus at purus sed urna sollicitudin mattis. Mauris lacinia libero in lobortis pulvinar. Nullam sit amet condimentum justo. Donec orci justo, pharetra ut dolor non, interdum finibus orci. Proin vitae ante a dui sodales commodo ac id elit. Nunc vel accumsan nunc, sit amet congue nunc. Aliquam in lacinia velit. Integer lobortis luctus eros, in fermentum metus aliquet a. Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos.</p>]]></content><author><name>Abhinav Saxena</name></author><summary type="html"><![CDATA[Mauris viverra dictum ultricies. Vestibulum quis ipsum euismod, facilisis metus sed, varius ipsum. Donec scelerisque lacus libero, eu dignissim sem venenatis at. Nunc a egestas tortor, sed feugiat leo. Vestibulum porta tincidunt tellus, vitae ornare tortor. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Sed nunc neque, tempor in iaculis non, faucibus et metus. Etiam id nisl ut lorem gravida euismod.]]></summary></entry><entry><title type="html">Language Tests</title><link href="http://localhost:4000/moonwalk/language-tests" rel="alternate" type="text/html" title="Language Tests" /><published>2020-07-08T00:00:00+09:00</published><updated>2020-07-08T00:00:00+09:00</updated><id>http://localhost:4000/moonwalk/language-tests</id><content type="html" xml:base="http://localhost:4000/moonwalk/language-tests"><![CDATA[<p>Note: Text is from <a href="https://github.com/huangyz0918/moving">moving</a>, which is another good Jekyll theme.</p>
+
+<h3 id="1-日本語テスト">1. 日本語テスト</h3>
+
+<p>This is a Japanese test post to show you how japanese is displayed.</p>
+
+<p>私は昨日ついにその助力家というのの上よりするたなけれ。
+最も今をお話団はちょうどこの前後なかろでくらいに困りがいるたをは帰着考えたなかって、そうにもするでうたらない。
+がたを知っないはずも同時に九月をいよいよたありた。</p>
+
+<p>もっと槙さんにぼんやり金少し説明にえた自分大した人私か影響にというお関係たうませないが、この次第も私か兄具合に使うて、槙さんののに当人のあなたにさぞご意味と行くて私個人が小尊敬を聴いように同時に同反抗に集っだうて、いよいよまず相当へあっうからいだ事をしでなけれ。</p>
+
+<blockquote>
+  <p>それでそれでもご時日をしはずはたったいやと突き抜けるますて、その元がは行ったてという獄を尽すていけですた。</p>
+</blockquote>
+
+<p>この中道具の日その学校はあなたごろがすまなりかとネルソンさんの考えるですん、辺の事実ないというご盲従ありたですと、爺さんのためが薬缶が結果までの箸の当時してならて、多少の十月にためからそういう上からとにかくしましないと触れべきものたで、ないうですと多少お人達したのでたた。</p>
+
+<p>From <a href="http://lipsum.sugutsukaeru.jp/index.cgi">すぐ使えるダミーテキスト - 日本語 Lorem ipsum.</a></p>
+
+<h3 id="2-繁体中文测试">2. 繁体中文测试</h3>
+
+<p>This is a chinese test post to show you how chinese is displayed.</p>
+
+<p>善我王上魚、產生資西員合兒臉趣論。畫衣生這著爸毛親可時，安程幾？合學作。觀經而作建。都非子作這！法如言子你關！手師也。</p>
+
+<p>以也座論頭室業放。要車時地變此親不老高小是統習直麼調未，行年香一？</p>
+
+<p>就竟在，是我童示讓利分和異種百路關母信過明驗有個歷洋中前合著區亮風值新底車有正結，進快保的行戰從：弟除文辦條國備當來際年每小腳識世可的的外的廣下歌洲保輪市果底天影；全氣具些回童但倒影發狀在示，數上學大法很，如要我……月品大供這起服滿老？應學傳者國：山式排只不之然清同關；細車是！停屋常間又，資畫領生，相們制在？公別的人寫教資夠。資再我我！只臉夫藝量不路政吃息緊回力之；兒足灣電空時局我怎初安。意今一子區首者微陸現際安除發連由子由而走學體區園我車當會，經時取頭，嚴了新科同？很夫營動通打，出和導一樂，查旅他。坐是收外子發物北看蘭戰坐車身做可來。道就學務。</p>
+
+<p>國新故。</p>
+
+<blockquote>
+  <p>工步他始能詩的，裝進分星海演意學值例道……於財型目古香亮自和這乎？化經溫詩。只賽嚴大一主價世哥受的沒有中年即病行金拉麼河。主小路了種就小為廣不？</p>
+</blockquote>
+
+<p>From <a href="http://www.richyli.com/tool/loremipsum/">亂數假文產生器 - Chinese Lorem Ipsum.</a></p>
+
+<h3 id="3-简体中文测试">3. 简体中文测试</h3>
+
+<p>效育声去本义然空，各值太法心想，场强实地。 题铁习点儿表管少间千，只何政亲织文意部，千影画派证男须。 手反取长风治增非等直难群，连取及天他己事头级，影数弦适把气快目人。 专议以省通引而千个，格则口段度样水热马，地教少务改磨。 包思外心半院应她算斯，市外会快记路又火学，劳如肃它准众丧边。</p>
+
+<blockquote>
+  <p>团算部住县单总边素格军所，合音府教看和广光采率位转，位用品根确针百。 证其标元角工方海接交他，论象切万世认一响义，治然身本风弦带题。 向我次路持加北，她不反心。 说总元军例市决，现始即算证养，规走还壳。</p>
+</blockquote>
+
+<p>因林可相儿应满军，热影省条律因资再，整肃赤心将届。 局广写两量备验还，南教事争工民的，备进研上布。 素身电活非直，速这区交示从，百层达。 资量那毛什京身，白这快。 半打容三手开常价或，手严量般象式效，名可重芽门适。 来设什一我么，光界美么或，住身式准。 造酸改表委验众办地百养，商物战众本列听度名院，制压录丽快与千机内。 住需当四议决得命南然照按民置，当住命形金决否矿单外。 气象理离开新集增际，三划方工义很年关，拉许准孝口。 构片出干计由备美打养，持育总指承入无己。</p>
+
+<p>From <a href="http://www.cancms.com/content/dummytext">假文生成器， lorem ipsum Chinese</a></p>]]></content><author><name>Abhinav Saxena</name></author><summary type="html"><![CDATA[Note: Text is from moving, which is another good Jekyll theme.]]></summary></entry></feed>

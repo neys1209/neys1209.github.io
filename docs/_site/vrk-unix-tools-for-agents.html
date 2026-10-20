@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en" class="html" data-theme="dark"><head>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <title>
+    
+      Unix wasn't built for agents
+    
+  </title>
+
+  <!-- Begin Jekyll SEO tag v2.7.3 -->
+<meta name="generator" content="Jekyll v4.4.1" />
+<meta property="og:title" content="Unix wasn’t built for agents" />
+<meta name="author" content="Abhinav Saxena" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="A few weeks ago I caught a pipeline that was about to send a 200KB document to an LLM, fail the input limit, retry three times, and bill me for the privilege. The shell didn’t blink. cat printed bytes, jq parsed them, curl uploaded them. Each tool did its job. None of them knew the agent at the end of the pipe was going to blow a token budget." />
+<meta property="og:description" content="A few weeks ago I caught a pipeline that was about to send a 200KB document to an LLM, fail the input limit, retry three times, and bill me for the privilege. The shell didn’t blink. cat printed bytes, jq parsed them, curl uploaded them. Each tool did its job. None of them knew the agent at the end of the pipe was going to blow a token budget." />
+<link rel="canonical" href="http://localhost:4000/moonwalk/vrk-unix-tools-for-agents" />
+<meta property="og:url" content="http://localhost:4000/moonwalk/vrk-unix-tools-for-agents" />
+<meta property="og:site_name" content="Moonwalk" />
+<meta property="og:image" content="https://soopr.xyz/images/card?url=http://localhost:4000/moonwalk/vrk-unix-tools-for-agents" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2026-04-15T12:30:00+09:00" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta property="og:image" content="https://soopr.xyz/images/card?url=http://localhost:4000/moonwalk/vrk-unix-tools-for-agents" />
+<meta property="twitter:title" content="Unix wasn’t built for agents" />
+<meta name="twitter:site" content="@abhinav" />
+<meta name="twitter:creator" content="@Abhinav Saxena" />
+<script type="application/ld+json">
+{"url":"http://localhost:4000/moonwalk/vrk-unix-tools-for-agents","author":{"@type":"Person","name":"Abhinav Saxena"},"description":"A few weeks ago I caught a pipeline that was about to send a 200KB document to an LLM, fail the input limit, retry three times, and bill me for the privilege. The shell didn’t blink. cat printed bytes, jq parsed them, curl uploaded them. Each tool did its job. None of them knew the agent at the end of the pipe was going to blow a token budget.","@type":"BlogPosting","headline":"Unix wasn’t built for agents","dateModified":"2026-04-15T12:30:00+09:00","datePublished":"2026-04-15T12:30:00+09:00","mainEntityOfPage":{"@type":"WebPage","@id":"http://localhost:4000/moonwalk/vrk-unix-tools-for-agents"},"@context":"https://schema.org"}</script>
+<script async defer data-soopr-token="" src="https://sdk.soopr.co/soopr.js"  ></script>
+<!-- End Jekyll SEO tag -->
+
+  <link type="application/atom+xml" rel="alternate" href="http://localhost:4000/moonwalk/feed.xml" title="Moonwalk" />
+
+  <!-- Favicon -->
+  <link rel="apple-touch-icon" sizes="180x180" href="/moonwalk/assets/images/favicon/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/moonwalk/assets/images/favicon/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/moonwalk/assets/images/favicon/favicon-16x16.png">
+  <link rel="manifest" href="/moonwalk/assets/images/favicon/site.webmanifest">
+  <link rel="mask-icon" href="/moonwalk/assets/images/favicon/safari-pinned-tab.svg" color="#5bbad5">
+  <link rel="shortcut icon" href="/moonwalk/assets/images/favicon/favicon.ico">
+  <meta name="msapplication-TileColor" content="#00aba9">
+  <meta name="msapplication-config" content="/moonwalk/assets/images/favicon/browserconfig.xml">
+  <meta name="theme-color" content="#ffffff">
+  <!-- Favicon -->
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;700&display=swap" rel="stylesheet"><link rel="dns-prefetch" href="https://sdk.soopr.co"><link rel="stylesheet" href="/moonwalk/assets/css/main.css" />
+  
+    <script type="text/javascript">
+  window.addEventListener('load', themeChange);
+  const currentTheme = localStorage.getItem('theme') ? localStorage.getItem('theme') : null;
+  if (currentTheme)
+    document.documentElement.setAttribute('data-theme', currentTheme);
+
+  function themeChange() {
+    var button = document.querySelector('.theme-toggle');
+    if (!button) return;
+
+    function updateIcon(theme) {
+      button.setAttribute('aria-pressed', theme === 'dark' ? 'true' : 'false');
+      button.querySelector('.icon-sun').style.display = theme === 'dark' ? 'block' : 'none';
+      button.querySelector('.icon-moon').style.display = theme === 'dark' ? 'none' : 'block';
+    }
+
+    updateIcon(document.documentElement.getAttribute('data-theme'));
+
+    button.addEventListener('click', function (e) {
+      var currentTheme = document.documentElement.getAttribute('data-theme');
+      var next = currentTheme === 'dark' ? 'light' : 'dark';
+
+      transition();
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('theme', next);
+      updateIcon(next);
+    });
+
+    function transition() {
+      document.documentElement.classList.add('transition');
+      window.setTimeout(function () {
+        document.documentElement.classList.remove('transition');
+      }, 1000);
+    }
+  }
+</script>
+
+  
+</head>
+<body><div class="progress-bar" aria-hidden="true"></div>
+<style>
+  .progress-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 0%;
+    height: 3px;
+    background: var(--links);
+    z-index: 100;
+    transition: width 50ms linear;
+  }
+</style>
+<script>
+(function() {
+  var bar = document.querySelector('.progress-bar');
+  window.addEventListener('scroll', function() {
+    var scrollTop = window.scrollY;
+    var docHeight = document.documentElement.scrollHeight - window.innerHeight;
+    if (docHeight > 0) {
+      bar.style.width = (scrollTop / docHeight * 100) + '%';
+    }
+  });
+})();
+</script>
+<main class="page-content" aria-label="Content">
+      <div class="w">
+        <a href="javascript:history.back()" class="back-link" aria-label="Go back">
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <polyline points="15 18 9 12 15 6"></polyline>
+  </svg>
+</a>
+<h1 class="post-title">Unix wasn't built for agents</h1>
+<div class="post-meta">
+  <div class="post-meta-line">
+    
+      <span class="post-meta-author">Abhinav Saxena</span>
+      <span class="post-meta-sep">·</span>
+    
+    
+      <time class="post-meta-date" datetime="2026-04-15T12:30:00+09:00">
+        April 15, 2026
+      </time>
+    
+    
+      
+      
+        <span class="post-meta-sep">·</span>
+        <span class="post-meta-reading">4 min read</span>
+      
+    
+  </div>
+
+  
+    <div class="post-meta-tags">
+      
+        <a href="/moonwalk/tags#ai" class="tag">AI</a>
+      
+        <a href="/moonwalk/tags#cli" class="tag">CLI</a>
+      
+        <a href="/moonwalk/tags#unix" class="tag">Unix</a>
+      
+    </div>
+  
+
+  <div class="soopr-btn"
+     data-twitter="abhinav"
+  ></div>
+</div>
+
+
+
+
+
+
+<details class="toc" open>
+  <summary>Table of Contents</summary>
+  <ul>
+    
+      
+        
+        
+        
+        
+        
+          <li><a href="#what-changes-when-an-agent-is-reading-the-pipe">What changes when an agent is reading the pipe</a></li>
+        
+      
+    
+      
+        
+        
+        
+        
+        
+          <li><a href="#the-shape-of-the-toolkit">The shape of the toolkit</a></li>
+        
+      
+    
+      
+        
+        
+        
+        
+        
+          <li><a href="#composability-is-the-whole-point">Composability is the whole point</a></li>
+        
+      
+    
+      
+        
+        
+        
+        
+        
+          <li><a href="#where-to-get-it">Where to get it</a></li>
+        
+      
+    
+  </ul>
+</details>
+
+<div class="post-content">
+  <p>A few weeks ago I caught a pipeline that was about to send a 200KB document to an LLM, fail the input limit, retry three times, and bill me for the privilege. The shell didn’t blink. cat printed bytes, jq parsed them, curl uploaded them. Each tool did its job. None of them knew the agent at the end of the pipe was going to blow a token budget.</p>
+
+<p>That bug taught me something obvious in retrospect. Unix tools were built for humans who read the output of one stage before piping to the next. We grep, eyeball the result, then pipe to awk. Agents skip the eyeballing. They wire the whole pipeline up at once and hope.</p>
+
+<p>vrk is the toolkit I started building for that gap. 26 small commands, one static binary, zero dependencies. It is not a replacement for cat or jq. It is the layer that should sit next to them when the consumer at the other end of the pipe is an LLM.</p>
+
+<h2 id="what-changes-when-an-agent-is-reading-the-pipe">What changes when an agent is reading the pipe</h2>
+
+<p>Three things, mostly.</p>
+
+<p><strong>Silent failures stop being acceptable.</strong> classic Unix conflates “no output” with “everything is fine.” awk on a missing field returns empty. jq on a wrong path returns null. A human notices. An agent passes the empty string through and the next stage hallucinates.</p>
+
+<p>vrk tools use explicit exit codes. 0 for success, 1 for an error you should stop on, 2 for a soft signal the next tool can react to. A tok check against a budget exits 2 when the input is too large, so the next stage in the pipe can branch instead of crashing.</p>
+
+<p><strong>Token counts are first-class.</strong> None of the standard tools care how many tokens a string is. wc -w is approximate at best, lying at worst. If the next stage costs money per token, you want the count up front and you want to gate on it.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>cat article.md | vrk tok --check 8000 | vrk prompt --system 'Summarize'
+</code></pre></div></div>
+
+<p>The check fails loudly if the input would blow the budget. The prompt never runs. No retries, no surprise bill.</p>
+
+<p><strong>Secrets need to leak less.</strong> Pipelines copy data through a lot of stages. Anything you log, cache, or upload to a third-party model is a potential leak. vrk mask runs entropy and pattern checks on stdin and redacts before the data ever reaches a remote API.</p>
+
+<h2 id="the-shape-of-the-toolkit">The shape of the toolkit</h2>
+
+<p>A few I reach for daily:</p>
+
+<ul>
+  <li><strong>vrk grab</strong> - fetch a URL and return clean Markdown. Stripping nav and chrome before the LLM sees it cuts token cost by 40 to 60 percent on most articles.</li>
+  <li><strong>vrk chunk</strong> - split a long document into token-bounded pieces with sentence-aware boundaries. The naive “split every N characters” approach truncates mid-word and the model notices.</li>
+  <li><strong>vrk validate</strong> - validate JSON output against a schema. LLMs return JSON-shaped strings, not always valid JSON. Catch it at the seam, not three stages later.</li>
+  <li><strong>vrk coax</strong> - retry with backoff. Built into the tool because every agent pipeline needs it and shell loops with sleep are how you end up rate-limited at 3 AM.</li>
+  <li><strong>vrk kv</strong> - SQLite-backed key-value store for caching. Same reason: every pipeline needs one, and standing up Redis to memoize a function call is absurd.</li>
+</ul>
+
+<p>The rest cover the boring bits: jwt, uuid, epoch, sse parsing, schema diffing. They exist because at some point I wrote them inline in a bash script and decided that was the third time too many.</p>
+
+<h2 id="composability-is-the-whole-point">Composability is the whole point</h2>
+
+<p>Each tool reads stdin and writes stdout. None of them have hidden state. They chain.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>cat data.json \
+  | vrk validate --schema input.schema.json \
+  | vrk mask \
+  | vrk prompt --model claude-opus-4-7 --system 'Extract entities' \
+  | vrk validate --schema output.schema.json
+</code></pre></div></div>
+
+<p>That is a complete agent pipeline. Validate the input, redact secrets, run the prompt, validate the output. Every stage fails loud. No surprise costs, no leaked tokens, no malformed JSON downstream.</p>
+
+<h2 id="where-to-get-it">Where to get it</h2>
+
+<p>vrk is open source and the binary is one curl away. Source and install instructions: <a href="https://vrk.sh">vrk.sh</a>.</p>
+
+<p>The pitch in one sentence: classic Unix tools are excellent for humans and dangerous for agents. vrk fills the small set of gaps that show up the moment an LLM is the consumer at the end of the pipe. Use it next to your existing toolkit, not instead of it.</p>
+
+</div>
+<nav class="post-nav" aria-label="Post navigation">
+  
+    <a class="post-nav-prev" href="/moonwalk/github-alerts">&larr; Github Alerts</a>
+  
+  
+    <a class="post-nav-next" href="/moonwalk/i-run-my-own-httpbin">I run my own httpbin &rarr;</a>
+  
+</nav>
+
+
+        
+          <button aria-label="Toggle dark mode" aria-pressed="false" class="theme-toggle">
+  <svg class="icon-sun" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <circle cx="12" cy="12" r="5"></circle>
+    <line x1="12" y1="1" x2="12" y2="3"></line>
+    <line x1="12" y1="21" x2="12" y2="23"></line>
+    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+    <line x1="1" y1="12" x2="3" y2="12"></line>
+    <line x1="21" y1="12" x2="23" y2="12"></line>
+    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+  </svg>
+  <svg class="icon-moon" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+  </svg>
+</button>
+
+        
+        <div class="credits">&copy;&nbsp;2026&nbsp;Abhinav Saxena
+          &nbsp;
+          •
+          &nbsp;Powered by <a href="https://www.soopr.co" target="_blank" rel="noopener noreferrer">Soopr</a>
+          &nbsp;
+          •
+          &nbsp;Theme&nbsp; <a href="https://github.com/abhinavs/moonwalk" target="_blank" rel="noopener noreferrer">Moonwalk</a>
+        </div>
+      </div>
+    </main><script>
+  document.addEventListener("DOMContentLoaded", function () {
+    var defined_alerts = {
+      NOTE:      { icon: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16"><path d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8Zm8-6.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13ZM6.5 7.75A.75.75 0 0 1 7.25 7h1a.75.75 0 0 1 .75.75v2.75h.25a.75.75 0 0 1 0 1.5h-2a.75.75 0 0 1 0-1.5h.25v-2h-.25a.75.75 0 0 1-.75-.75ZM8 6a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z"></path></svg>', label: 'Note' },
+      TIP:       { icon: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16"><path d="M8 1.5c-2.363 0-4 1.69-4 3.75 0 .984.424 1.625.984 2.304l.214.253c.223.264.47.556.673.848.284.411.537.896.621 1.49a.75.75 0 0 1-1.484.211c-.04-.282-.163-.547-.37-.847a8.456 8.456 0 0 0-.542-.68c-.084-.1-.173-.205-.268-.32C3.201 7.75 2.5 6.766 2.5 5.25 2.5 2.31 4.863 0 8 0s5.5 2.31 5.5 5.25c0 1.516-.701 2.5-1.328 3.259-.095.115-.184.22-.268.319-.207.245-.383.453-.541.681-.208.3-.33.565-.37.847a.751.751 0 0 1-1.485-.212c.084-.593.337-1.078.621-1.489.203-.292.45-.584.673-.848.075-.088.147-.173.213-.253.561-.679.985-1.32.985-2.304 0-2.06-1.637-3.75-4-3.75ZM5.75 12h4.5a.75.75 0 0 1 0 1.5h-4.5a.75.75 0 0 1 0-1.5ZM6 15.25a.75.75 0 0 1 .75-.75h2.5a.75.75 0 0 1 0 1.5h-2.5a.75.75 0 0 1-.75-.75Z"></path></svg>', label: 'Tip' },
+      IMPORTANT: { icon: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16"><path d="M0 1.75C0 .784.784 0 1.75 0h12.5C15.216 0 16 .784 16 1.75v9.5A1.75 1.75 0 0 1 14.25 13H8.06l-2.573 2.573A1.458 1.458 0 0 1 3 14.543V13H1.75A1.75 1.75 0 0 1 0 11.25Zm1.75-.25a.25.25 0 0 0-.25.25v9.5c0 .138.112.25.25.25h2a.75.75 0 0 1 .75.75v2.19l2.72-2.72a.749.749 0 0 1 .53-.22h6.5a.25.25 0 0 0 .25-.25v-9.5a.25.25 0 0 0-.25-.25Zm7 2.25v2.5a.75.75 0 0 1-1.5 0v-2.5a.75.75 0 0 1 1.5 0ZM9 9a1 1 0 1 1-2 0 1 1 0 0 1 2 0Z"></path></svg>', label: 'Important' },
+      WARNING:   { icon: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16"><path d="M6.457 1.047c.659-1.234 2.427-1.234 3.086 0l6.082 11.378A1.75 1.75 0 0 1 14.082 15H1.918a1.75 1.75 0 0 1-1.543-2.575Zm1.763.707a.25.25 0 0 0-.44 0L1.698 13.132a.25.25 0 0 0 .22.368h12.164a.25.25 0 0 0 .22-.368Zm.53 3.996v2.5a.75.75 0 0 1-1.5 0v-2.5a.75.75 0 0 1 1.5 0ZM9 11a1 1 0 1 1-2 0 1 1 0 0 1 2 0Z"></path></svg>', label: 'Warning' },
+      CAUTION:   { icon: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16"><path d="M4.47.22A.749.749 0 0 1 5 0h6c.199 0 .389.079.53.22l4.25 4.25c.141.14.22.331.22.53v6a.749.749 0 0 1-.22.53l-4.25 4.25A.749.749 0 0 1 11 16H5a.749.749 0 0 1-.53-.22L.22 11.53A.749.749 0 0 1 0 11V5c0-.199.079-.389.22-.53Zm.84 1.28L1.5 5.31v5.38l3.81 3.81h5.38l3.81-3.81V5.31L10.69 1.5ZM8 4a.75.75 0 0 1 .75.75v3.5a.75.75 0 0 1-1.5 0v-3.5A.75.75 0 0 1 8 4Zm0 8a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z"></path></svg>', label: 'Caution' }
+    };
+
+    var blockquotes = document.querySelectorAll("blockquote");
+    for (var i = 0; i < blockquotes.length; i++) {
+      var bq = blockquotes[i];
+      var firstP = bq.querySelector("p:first-child");
+      if (!firstP) continue;
+
+      var text = firstP.innerHTML;
+      var match = text.match(/^\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]\s*(<br\s*\/?>)?/);
+      if (!match) continue;
+
+      var type = match[1];
+      var alert = defined_alerts[type];
+
+      // Remove the marker from the paragraph text
+      firstP.innerHTML = text.replace(match[0], "").trim();
+
+      // If the paragraph is now empty, remove it
+      if (!firstP.innerHTML) {
+        firstP.remove();
+      }
+
+      // Build the alert title
+      var title = document.createElement("p");
+      title.className = "markdown-alert-title";
+      title.innerHTML = alert.icon + " " + alert.label;
+      bq.insertBefore(title, bq.firstChild);
+
+      bq.classList.add("markdown-alert", "markdown-alert-" + type.toLowerCase());
+    }
+  });
+</script>
+<script>
+(function() {
+  document.querySelectorAll('div.highlighter-rouge').forEach(function(block) {
+    block.style.position = 'relative';
+
+    // Language label derived from rouge's language-* class
+    var langClass = Array.from(block.classList).find(function(c) {
+      return c.indexOf('language-') === 0 && c !== 'language-plaintext';
+    });
+    if (langClass) {
+      var label = document.createElement('span');
+      label.className = 'code-lang';
+      label.textContent = langClass.replace('language-', '');
+      block.appendChild(label);
+    }
+
+    var btn = document.createElement('button');
+    btn.className = 'code-copy';
+    btn.setAttribute('aria-label', 'Copy code to clipboard');
+    btn.textContent = 'copy';
+    btn.addEventListener('click', function() {
+      var code = block.querySelector('code');
+      navigator.clipboard.writeText(code.innerText).then(function() {
+        btn.textContent = 'copied!';
+        setTimeout(function() { btn.textContent = 'copy'; }, 2000);
+      });
+    });
+    block.appendChild(btn);
+  });
+})();
+</script>
+<script>
+(function() {
+  // Render a small tooltip preview when hovering/tapping kramdown-generated
+  // footnote refs (e.g. <a href="#fn:1">1</a>) so readers don't have to
+  // scroll to the bottom of the post.
+  var refs = document.querySelectorAll('a.footnote, sup a[href^="#fn"]');
+  if (!refs.length) return;
+
+  var tip = document.createElement('div');
+  tip.className = 'fn-tooltip';
+  tip.setAttribute('role', 'tooltip');
+  document.body.appendChild(tip);
+
+  function show(ref) {
+    var id = ref.getAttribute('href').slice(1);
+    var fn = document.getElementById(id);
+    if (!fn) return;
+    var clone = fn.cloneNode(true);
+    var back = clone.querySelector('.reversefootnote, a[href^="#fnref"]');
+    if (back) back.remove();
+    tip.innerHTML = clone.innerHTML;
+
+    var rect = ref.getBoundingClientRect();
+    var top = window.scrollY + rect.bottom + 8;
+    var left = Math.max(12, window.scrollX + rect.left - 12);
+    tip.style.top = top + 'px';
+    tip.style.left = left + 'px';
+    tip.classList.add('visible');
+  }
+  function hide() { tip.classList.remove('visible'); }
+
+  refs.forEach(function(ref) {
+    ref.addEventListener('mouseenter', function() { show(ref); });
+    ref.addEventListener('mouseleave', hide);
+    ref.addEventListener('focus', function() { show(ref); });
+    ref.addEventListener('blur', hide);
+  });
+})();
+</script>
+<script>
+(function() {
+  // Hover any internal post link to see a small preview card with title,
+  // excerpt and date. Pulls from /search.json which is a Jekyll-generated
+  // index of all posts.
+  var postIndex = null;
+  var loading = null;
+
+  function loadIndex() {
+    if (loading) return loading;
+    loading = fetch('/moonwalk/search.json')
+      .then(function(r) { return r.ok ? r.json() : []; })
+      .then(function(data) { postIndex = data; return data; })
+      .catch(function() { postIndex = []; return []; });
+    return loading;
+  }
+
+  var card = document.createElement('div');
+  card.className = 'link-preview';
+  document.body.appendChild(card);
+  var hideTimer;
+
+  function show(link, post) {
+    card.innerHTML =
+      '<div class="lp-title">' + escape(post.title) + '</div>' +
+      (post.excerpt ? '<div class="lp-excerpt">' + escape(post.excerpt) + '</div>' : '') +
+      '<div class="lp-meta">' + escape(post.date || '') + '</div>';
+    var rect = link.getBoundingClientRect();
+    card.style.top = (window.scrollY + rect.bottom + 8) + 'px';
+    card.style.left = Math.max(12, window.scrollX + rect.left) + 'px';
+    card.classList.add('visible');
+  }
+  function hide() {
+    hideTimer = setTimeout(function() { card.classList.remove('visible'); }, 100);
+  }
+  function escape(s) {
+    return String(s || '').replace(/[&<>"']/g, function(c) {
+      return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c];
+    });
+  }
+
+  document.querySelectorAll('.page-content a[href^="/"], .page-content a[href^="http://localhost:4000"]').forEach(function(link) {
+    link.addEventListener('mouseenter', function() {
+      clearTimeout(hideTimer);
+      loadIndex().then(function(idx) {
+        var href = link.getAttribute('href').replace('http://localhost:4000', '');
+        var match = idx.find(function(p) { return p.url === href || p.url === href + '/'; });
+        if (match) show(link, match);
+      });
+    });
+    link.addEventListener('mouseleave', hide);
+  });
+  card.addEventListener('mouseenter', function() { clearTimeout(hideTimer); });
+  card.addEventListener('mouseleave', hide);
+})();
+</script>
+<button class="back-to-top" aria-label="Back to top" onclick="window.scrollTo({top:0,behavior:'smooth'})">
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <polyline points="18 15 12 9 6 15"></polyline>
+  </svg>
+</button>
+<style>
+  .back-to-top {
+    position: fixed;
+    bottom: 2em;
+    right: 2em;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    background: var(--bg-secondary);
+    color: var(--text);
+    cursor: pointer;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 50;
+  }
+  .back-to-top.visible {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .back-to-top:hover {
+    color: var(--links);
+  }
+  @media screen and (max-width: 600px) {
+    .back-to-top {
+      bottom: 1em;
+      right: 1em;
+      width: 36px;
+      height: 36px;
+    }
+  }
+</style>
+<script>
+(function() {
+  var btn = document.querySelector('.back-to-top');
+  window.addEventListener('scroll', function() {
+    if (window.scrollY > 400) {
+      btn.classList.add('visible');
+    } else {
+      btn.classList.remove('visible');
+    }
+  });
+})();
+</script>
+<script async defer src="https://sdk.soopr.co/soopr.js"></script></body>
+</html>
