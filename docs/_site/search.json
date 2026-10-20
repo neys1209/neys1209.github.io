@@ -1,91 +1,19 @@
 [
   
   {
-    "url": "/moonwalk/agent-friendly-jekyll",
-    "title": "Making your Jekyll site agent-friendly",
-    "date": "2026-05-06",
-    "tags": ["Jekyll","AI","Plugins"],
-    "excerpt": "A growing share of your readers are not human. ChatGPT, Claude, Perplexity, agent frameworks, and the indexing crawlers behind them all want to read your site. They are also pretty bad at it. They burn tokens parsing HTML, stripping nav ..."
-  },
-  
-  {
-    "url": "/moonwalk/postgres-is-enough-for-background-jobs",
-    "title": "Postgres is enough for background jobs",
-    "date": "2026-05-03",
-    "tags": ["Python","Postgres","Background Jobs"],
-    "excerpt": "The reflex when a Python app needs background jobs is to reach for Celery, which means reaching for Redis, which means reaching for a third moving part: another service to run, monitor, back up, and reason about when something goes wrong."
-  },
-  
-  {
-    "url": "/moonwalk/landing-page-and-app-should-be-separate",
-    "title": "Your landing page and your app should not be the same site",
-    "date": "2026-04-28",
-    "tags": ["Jekyll","Tailwind","Indie"],
-    "excerpt": "There is a tempting move when you start a new product. The app is in Rails or Next or whatever you reach for. The marketing page is one route. About, pricing, terms, privacy, blog, all served by the same process. One repo, one deploy, on..."
-  },
-  
-  {
-    "url": "/moonwalk/i-run-my-own-httpbin",
-    "title": "I run my own httpbin",
-    "date": "2026-04-22",
-    "tags": ["HTTP","Elixir","Tools"],
-    "excerpt": "httpbin.org is one of those quiet pieces of internet plumbing that everyone leans on. CI tests, client library examples, half the curl tutorials on Stack Overflow. It is also a single hostname run as a side project, and when it has a bad..."
-  },
-  
-  {
-    "url": "/moonwalk/vrk-unix-tools-for-agents",
-    "title": "Unix wasn't built for agents",
-    "date": "2026-04-15",
-    "tags": ["AI","CLI","Unix"],
-    "excerpt": "A few weeks ago I caught a pipeline that was about to send a 200KB document to an LLM, fail the input limit, retry three times, and bill me for the privilege. The shell didn’t blink. cat printed bytes, jq parsed them, curl uploaded them...."
-  },
-  
-  {
-    "url": "/moonwalk/github-alerts",
-    "title": "Github Alerts",
-    "date": "2021-04-01",
-    "tags": ["feature","alerts"],
-    "excerpt": "Moonwalk now supports GitHub Markdown Alerts. These are styled blockquotes that highlight important information."
-  },
-  
-  {
-    "url": "/moonwalk/soopr",
-    "title": "Soopr",
-    "date": "2021-03-04",
-    "tags": ["soopr","config"],
-    "excerpt": "Soopr is the easiest way for you to add share &amp; reaction buttons to your blog and website, integrate an URL shortener and simple to understand analytics service. Soopr lets you manage all of these using a powerful dashboard."
-  },
-  
-  {
-    "url": "/moonwalk/code",
-    "title": "Code Blocks",
-    "date": "2021-01-08",
+    "url": "/moonwalk/welcome-to-jekyll",
+    "title": "Welcome to Jekyll!",
+    "date": "2026-10-19",
     "tags": [],
-    "excerpt": "A showcase of syntax highlighting across languages."
+    "excerpt": "You’ll find this post in your _posts directory. Go ahead and edit it and re-build the site to see your changes. You can rebuild the site in many different ways, but the most common way is to run jekyll serve, which launches a web server ..."
   },
   
   {
-    "url": "/moonwalk/post-example-with-headings-and-toc",
-    "title": "Post Example With Headings And Toc",
-    "date": "2020-07-09",
+    "url": "/moonwalk/hello-world",
+    "title": "Hello, World!",
+    "date": "2026-10-19",
     "tags": [],
-    "excerpt": "Mauris viverra dictum ultricies. Vestibulum quis ipsum euismod, facilisis metus sed, varius ipsum. Donec scelerisque lacus libero, eu dignissim sem venenatis at. Nunc a egestas tortor, sed feugiat leo. Vestibulum porta tincidunt tellus, ..."
-  },
-  
-  {
-    "url": "/moonwalk/very-very-very-long-title-and-very-very-very-short-content",
-    "title": "Very Very Very Long Title And Very Very Very Short Content",
-    "date": "2020-07-08",
-    "tags": [],
-    "excerpt": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque vel lacinia neque. Praesent nulla quam, ullamcorper in sollicitudin ac, molestie sed justo. Cras aliquam, sapien id consectetur accumsan, augue magna faucibus ex, ut u..."
-  },
-  
-  {
-    "url": "/moonwalk/language-tests",
-    "title": "Language Tests",
-    "date": "2020-07-08",
-    "tags": [],
-    "excerpt": "Note: Text is from moving, which is another good Jekyll theme."
+    "excerpt": "테스트:"
   },
   
   {
