@@ -1,7 +1,7 @@
 [
   
   {
-    "url": "/moonwalk/welcome-to-jekyll",
+    "url": "/welcome-to-jekyll",
     "title": "Welcome to Jekyll!",
     "date": "2026-10-19",
     "tags": [],
@@ -9,7 +9,7 @@
   },
   
   {
-    "url": "/moonwalk/hello-world",
+    "url": "/hello-world",
     "title": "Hello, World!",
     "date": "2026-10-19",
     "tags": [],
@@ -17,7 +17,7 @@
   },
   
   {
-    "url": "/moonwalk/overview-post",
+    "url": "/overview-post",
     "title": "Overview Post",
     "date": "2020-07-07",
     "tags": ["overview","moonwalk"],

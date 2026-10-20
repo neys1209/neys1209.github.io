@@ -3,7 +3,7 @@ title: Hello, World!
 date: '2026-10-19T19:26:00+09:00'
 url: http://localhost:4000/hello-world
 summary: '테스트:'
-author: Abhinav Saxena
+author: neys
 ---
 
 # Hello, World!

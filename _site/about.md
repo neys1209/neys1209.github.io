@@ -1,7 +1,7 @@
 ---
 title: About
 url: http://localhost:4000/about
-author: Abhinav Saxena
+author: neys
 ---
 
 # About
