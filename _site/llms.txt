@@ -4,6 +4,4 @@
 
 ## Posts
 
-- [Welcome to Jekyll!](http://localhost:4000/welcome-to-jekyll): You’ll find this post in your _posts directory. Go ahead and edit it and re-build the site to see your changes. You can rebuild the site in many different ways, but the most common way is to run jekyll serve, which launches a web server and auto-regenerates your site when a file is updated.
 - [Hello, World!](http://localhost:4000/hello-world): 테스트:
-- [Overview Post](http://localhost:4000/overview-post): Lorem ipsum1 dolor sit amet, consectetur adipiscing elit. Pellentesque vel lacinia neque. Praesent nulla quam, ullamcorper in sollicitudin ac, molestie sed justo. Cras aliquam, sapien id consectetur accumsan, augue magna faucibus ex, ut ultricies turpis tortor vel ante. In at rutrum tellus.
